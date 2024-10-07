@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bugzilla Report Creator</title>
+  </head>
+  <body>
+    <h1>Bugzilla Report Creator</h1>
+    <input type="email" id="email" placeholder="Bugzilla Email" />
+    <p>
+      Visit (opens in new tab)
+      <a target="_blank" id="bugzilla-url"
+        >https://bugzilla.mozilla.org/page.cgi?id=user_activity.html&action=run&group=bug&who=ENTER_YOUR_EMAIL_ABOVE</a
+      >
+    </p>
+
+    <h2>Run the following code on opened Bugzilla Page</h2>
+    <pre><code>
+const bugs = [
+...document.querySelectorAll(".report_row_even, .report_row_odd"),
+]
+.map((row) => [
+  row.firstElementChild.innerText,
+  row.lastElementChild.innerText,
+])
+.filter(([firstCol]) => firstCol.match(/\d+/));
+const uniqueBugs = [...new Set(bugs)];
+console.log(JSON.stringify(uniqueBugs));
+    </code></pre>
+
+    <h2>Paste the output</h2>
+    <textarea id="input" rows="10" cols="50"></textarea>
+
+    <h2>Copy the output</h2>
+    <button id="copy">Copy</button>
+    <div id="output"></div>
+
+    <script>
+      const email = document.getElementById("email");
+      const bugzillaUrl = document.getElementById("bugzilla-url");
+      email.addEventListener("input", () => {
+        const url = `https://bugzilla.mozilla.org/page.cgi?id=user_activity.html&action=run&group=bug&who=${email.value}`;
+        bugzillaUrl.href = url;
+        bugzillaUrl.innerText = url;
+      });
+
+      const input = document.getElementById("input");
+      const output = document.getElementById("output");
+
+      input.addEventListener("input", () => {
+        try {
+          const ul = document.createElement("ul");
+          const bugs = JSON.parse(input.value);
+          bugs.forEach(([id, summary]) => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = `https://bugzilla.mozilla.org/show_bug.cgi?id=${id}`;
+            a.innerText = `${id}`;
+            li.appendChild(a);
+            li.appendChild(document.createTextNode(` - ${summary}`));
+            ul.appendChild(li);
+          });
+          output.innerHTML = "";
+          output.appendChild(ul);
+        } catch (e) {
+          output.innerHTML = "Invalid JSON";
+        }
+      });
+
+      const copy = document.getElementById("copy");
+      copy.addEventListener("click", () => {
+        const blob = new Blob([output.innerHTML], { type: "text/html" });
+        const clipboardItem = new window.ClipboardItem({ "text/html": blob });
+        navigator.clipboard.write([clipboardItem]);
+      });
+    </script>
+  </body>
+</html>
